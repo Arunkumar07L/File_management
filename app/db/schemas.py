@@ -17,6 +17,9 @@ class FolderRenameInfo(BaseModel):
     folder_id : int
     new_name : str
     
+class FolderListInfo(BaseModel):
+    folder_id : int
+    
 class FileInfo(BaseModel):
     name: str
     type : str

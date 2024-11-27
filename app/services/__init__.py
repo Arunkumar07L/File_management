@@ -3,7 +3,9 @@ from app.db.models import Folder
 from app.db.session import db
 
 base_path = os.path.join(os.path.normpath(os.path.join(os.getcwd(), "..")), "Directory")
-os.mkdir(base_path)
+
+if not base_path:
+    os.mkdir(base_path)
 
 def get_path(name, parent_id, sub_path=""):
     sub_path = os.path.join(name, sub_path) if name else sub_path

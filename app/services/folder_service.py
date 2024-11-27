@@ -44,3 +44,15 @@ def rename_folder(data):
     folder.name = data.new_name
     db.commit()
     return {"message" : "Folder Renamed Successfully","previous_name" : folder_path, "new_name" :new_path}
+
+def folder_contents(data):
+    folder = db.query(Folder).filter(Folder.id==data.folder_id).first()
+    folder_path = get_path(folder.name,folder.parent_id)
+    contents = {}
+    for root, dirs, files in os.walk(folder_path):
+        contents[root] = {
+            "dirs" : dirs,
+            "files" : files
+        }
+    
+    return {"Root":contents}

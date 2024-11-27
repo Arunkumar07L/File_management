@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from app.services.folder_service import create_folder,move_folder,delete_folder,rename_folder
-from app.db.schemas import FolderInfo,FolderMoveInfo,FolderDeleteInfo,FolderRenameInfo
+from app.services.folder_service import create_folder,move_folder,delete_folder,rename_folder,folder_contents
+from app.db.schemas import FolderInfo,FolderMoveInfo,FolderDeleteInfo,FolderRenameInfo,FolderListInfo
 
 
 router = APIRouter()
@@ -20,3 +20,7 @@ def folder_deletion(data:FolderDeleteInfo):
 @router.post("/rename")
 def folder_renaming(data:FolderRenameInfo):
     return rename_folder(data)
+
+@router.post("/list")
+def content_list(data:FolderListInfo):
+    return folder_contents(data)
