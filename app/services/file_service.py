@@ -57,7 +57,8 @@ def upload_file(request):
     return templates.TemplateResponse("upload.html",context)
 
 async def upload_chunk(file,index,total_chunks,file_type):
-    file_path = os.path.join(f"{os.getcwd()}//chunks", f"{file.filename}.{file_type[file_type.index('/')+1:]}")
+    upload_path = f"{os.getcwd()}\\chunks"
+    file_path = os.path.join(upload_path, f"{file.filename}.{file_type[file_type.index('/')+1:]}") if upload_path else os.mkdir(upload_path)
     mode = "wb" if index == 0 else "ab"
     with open(file_path, mode) as f:
         content = await file.read()

@@ -12,38 +12,69 @@
         <input type="file" id="file" name="file" required>
         <br><br>
         <button type="button" onclick="startUpload()">Upload</button>
+        <button type="button" id="resume" onclick="retrychunk()" style="display:none">Resume</button>
     </form>
     <div id="status"></div>
 </body>
 </html>
 
 <script>
-    async function startUpload() {
-        const fileInput = document.getElementById("file");
-        const file = fileInput.files[0];
-        alert(file.size)
+    let file;
+    let chunkSize = 1 * 1024 * 1024 *1024;
+    let totalChunks = 0;
+    let failed_chunk = null;
+    let currentChunkIndex = 0;
+    const retry = document.getElementById('resume');
+    const statusDiv = document.getElementById("status");
+    const fileInput = document.getElementById("file");
+
+    async function startUpload() {   
+        file = fileInput.files[0];
         if (!file) {
             alert("Please select a file to upload.");
             return;
         }
-
-        const chunkSize = 5 * 1024 * 1024; // 5MB per chunk
-        const totalChunks = Math.ceil(file.size / chunkSize);
-        const statusDiv = document.getElementById("status");
-
-        statusDiv.innerHTML = `Uploading ${file.name} in ${totalChunks} chunks...`;
-
-        for (let i = 0; i < totalChunks; i++) {
+        totalChunks = Math.ceil(file.size / chunkSize);
+        currentChunkIndex = 0;
+        await uploadChunks();
+    }
+    async function uploadChunks(){
+       
+        for (let i = currentChunkIndex; i < totalChunks; i++) {
             const chunk = file.slice(i * chunkSize, (i + 1) * chunkSize);
             const success = await uploadChunk(chunk, i, totalChunks,file.type);
-
+ 
             if (!success) {
+                document.getElementById("resume").style.display="inline";
                 statusDiv.innerHTML = `Upload failed at chunk ${i + 1}.`;
-                return;
+                failed_chunk = {"chunk":chunk,"index":i,"total_chunks":totalChunks,"file_type":file.type};
+                break;
             }
-        }
+            currentChunkIndex = i + 1;
+            statusDiv.innerHTML = `Uploaded chunk ${i + 1}/${totalChunks}`;
+        };
 
-        statusDiv.innerHTML = "Upload completed successfully!";
+        if (currentChunkIndex === totalChunks) {
+            statusDiv.innerHTML = "Upload completed successfully!";
+        }
+    }
+
+    async function retrychunk(){
+        retry.style.display = "none";
+        const { chunk, index, total_chunks, file_type } = failed_chunk;
+        new_success = await uploadChunk(chunk,index,total_chunks,file_type);
+
+        if (new_success){
+            statusDiv.innerHTML = `Chunk ${index + 1} uploaded successfully! Resuming upload...`;
+            failed_chunk = null; 
+            currentChunkIndex = index + 1; 
+            await uploadChunks(); 
+        }
+        else{
+            document.getElementById("resume").style.display="inline";
+            statusDiv.innerHTML = `Chunk ${index + 1} failed again. Please click "Retry Failed Chunk" to try again.`;
+                    
+        }
     }
 
     async function uploadChunk(chunk, index, totalChunks,file_type) {
@@ -63,8 +94,11 @@
                 console.error(`Error uploading chunk ${index + 1}:`, response.statusText);
                 return false;
             }
+
+            console.log(`Chunk ${index + 1} uploaded successfully`);
             return true;
         } catch (error) {
+            console.error(`Error uploading chunk ${index + 1}:`, error);
             return false;
         }
     }
