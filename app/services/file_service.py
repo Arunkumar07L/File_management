@@ -2,6 +2,9 @@ from app.db.session import db
 from app.db.models import File,Folder
 from app.services import get_path
 import os
+from fastapi.templating import Jinja2Templates
+
+templates = Jinja2Templates(directory="templates")
 
 
 def create_file(data):
@@ -48,3 +51,20 @@ def delete_file(data):
     os.remove(file_path)
     
     return {"message" : "File Deleted Successfully"}
+
+def upload_file(request):
+    context = {"request":request}
+    return templates.TemplateResponse("upload.html",context)
+
+async def upload_chunk(file,index,total_chunks,file_type):
+    file_path = os.path.join(f"{os.getcwd()}//chunks", f"{file.filename}.{file_type[file_type.index('/')+1:]}")
+    mode = "wb" if index == 0 else "ab"
+    with open(file_path, mode) as f:
+        content = await file.read()
+        f.write(content)
+
+    if index + 1 == total_chunks:
+        return {"status": "complete", "filename": file.filename}
+    
+    return {"status": "chunk uploaded", "chunk_index": index}
+    
